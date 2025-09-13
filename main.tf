@@ -3,7 +3,7 @@ resource "aws_instance" "my_first_instance" {
   instance_type = "t2.micro"
   key_name      = aws_key_pair.generated_key.key_name
 
-  vpc_security_group_ids      = [aws_security_group.allow_ssh.id]
+  vpc_security_group_ids = [aws_security_group.allow_ssh.id]
   # associate_public_ip_address = true
 
   tags = {
