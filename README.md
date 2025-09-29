@@ -1,3 +1,5 @@
+Before running the project, create a s3 bucket with name `tf-s3-state-bucket-1` to store state file. #In future, move this to other small terraform local project, instead of creating bucket manually from aws console.
+
 🚀 Launch a Basic EC2 Instance (AWS)
 Goal: Deploy a free-tier t2.micro EC2 instance in AWS.
 Concepts Covered:
