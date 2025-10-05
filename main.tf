@@ -59,22 +59,57 @@ resource "aws_route_table_association" "public_assoc" {
   route_table_id = aws_route_table.public.id
 }
 
-resource "aws_security_group" "public_sg" {
-  name        = "public-ec2-sg"
+resource "aws_security_group" "bastion" {
+  name        = "bastion-sg"
+  description = "Allow SSH only from my IP"
   vpc_id      = aws_vpc.main.id
-  description = "Allow SSH inbound traffic"
 
   ingress {
+    description = "SSH from my IP"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"] # 👈 open SSH from anywhere (ok for testing)
+    cidr_blocks = ["${chomp(data.http.my_ip.body)}/32"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "bastion-sg"
+  }
+
+}
+
+resource "aws_security_group" "app" {
+  name        = "app-sg"
+  vpc_id      = aws_vpc.main.id
+  description = "Allow SSH from bastion and HTTP/HTTPS"
+
+  ingress {
+    description     = "SSH from Bastion Host"
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.bastion.id]
   }
 
   ingress {
-    description = "HTTP"
+    description = "HTTP from anywhere"
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTPS from anywhere"
+    from_port   = 443
+    to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -87,29 +122,29 @@ resource "aws_security_group" "public_sg" {
   }
 
   tags = {
-    Name = "public-ec2-sg"
+    Name = "app-sg"
   }
 }
 
-resource "aws_instance" "my_first_instance" {
+resource "aws_instance" "bastion" {
   ami           = "ami-0c94855ba95c71c99"
   instance_type = "t2.micro"
   key_name      = aws_key_pair.generated_key.key_name
-  subnet_id              = aws_subnet.public.id
+  subnet_id     = aws_subnet.public.id
 
-  vpc_security_group_ids = [aws_security_group.public_sg.id]
+  vpc_security_group_ids      = [aws_security_group.bastion.id]
   associate_public_ip_address = true
-  user_data = <<-EOF
-            #!/bin/bash
-            yum update -y
-            yum install -y httpd
-            systemctl start httpd
-            systemctl enable httpd
-            echo "<h1>Hello from Vishal's web server. You are valued here.</h1>" > /var/www/html/index.html
-            EOF
+  # user_data = <<-EOF
+  #           #!/bin/bash
+  #           yum update -y
+  #           yum install -y httpd
+  #           systemctl start httpd
+  #           systemctl enable httpd
+  #           echo "<h1>Hello from Vishal's web server. You are valued here.</h1>" > /var/www/html/index.html
+  #           EOF
 
   tags = {
-    Name = "MyFirstTerraformInstance"
+    Name = "bastion-host"
   }
 }
 
@@ -130,16 +165,24 @@ resource "local_file" "private_key_pem" {
 }
 
 #ec2 - private subnet
-resource "aws_instance" "private_ec2" {
-  ami           = "ami-0c94855ba95c71c99"
+resource "aws_instance" "app" {
+  ami           = "ami-0c94855ba95c71c99" #"ami-0c02fb55956c7d316"
   instance_type = "t2.micro"
   key_name      = aws_key_pair.generated_key.key_name
-  subnet_id              = aws_subnet.private.id
+  subnet_id     = aws_subnet.private.id
 
-  vpc_security_group_ids = [aws_security_group.public_sg.id]
+  vpc_security_group_ids      = [aws_security_group.app.id]
   # associate_public_ip_address = true
+  # user_data = <<-EOF
+  #           #!/bin/bash
+  #           yum update -y
+  #           yum install -y httpd
+  #           systemctl start httpd
+  #           systemctl enable httpd
+  #           echo "<h1>Hello from Vishal's web server. You are valued here.</h1>" > /var/www/html/index.html
+  #           EOF
 
   tags = {
-    Name = "MyFirstTerraformInstance"
+    Name = "private-app"
   }
 }
