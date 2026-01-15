@@ -3,3 +3,6 @@ terraform.tfstate.backup
 .terraform/*
 .terraform.lock.hcl
 terraform-key.pem
+create-ec2-instance/.terraform/*
+create-ec2-instance/terraform.tfstate*
+create-ec2-instance/.terraform.lock.hcl
