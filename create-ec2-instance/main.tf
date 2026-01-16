@@ -4,8 +4,12 @@ resource "aws_instance" "this" {
   instance_type               = "t2.large"
   key_name                    = aws_key_pair.this.key_name
   associate_public_ip_address = true
-  #   security_groups             = [aws_security_group.this.id] # try disabling this and see what happens
-  vpc_security_group_ids = [aws_security_group.this.id]
+  vpc_security_group_ids      = [aws_security_group.this.id]
+  # user_data                   = <<-EOF
+  # #!/bin/bash
+  # mkdir /home/ubuntu/test_dir
+  # EOF
+  user_data = templatefile("${path.module}/scripts/ec2_init.sh", {})
 
   tags = {
     Name = "devops-demo"
