@@ -10,3 +10,4 @@ ec2-remote-state/.terraform*
 ec2-remote-state/.terraform/*
 ec2-remote-state/terraform.tfstate*
 ec2-remote-state/*.pem
+project-development/*
