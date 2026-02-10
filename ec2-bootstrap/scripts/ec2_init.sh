@@ -49,3 +49,9 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashi
 sudo apt update
 sudo apt-get install terraform
 echo "********* Terraform installation complete! *********"
+
+#install aws cli
+sudo apt install unzip -y
+sudo curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip awscliv2.zip
+sudo ./aws/install
